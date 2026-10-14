@@ -44,7 +44,7 @@ import { ZoneMoveMenuItems } from './ZoneMoveMenuItems';
 import { beginZoneDrag, cancelZoneDrag, finishZoneDrag, startZoneDragGesture, updateZoneDrag } from './zoneDrag';
 import { setZoneBody, setZoneHeaderSlot } from './zoneHosts';
 import { useOpenUntilSettled } from './useOpenUntilSettled';
-import { measureGitToolbarMinimumWidth } from './gitToolbarMinimumWidth';
+import { measureGitPanelMinimumWidth } from './gitPanelMinimumWidth';
 
 const CONTEXT_PANEL_MIN_WIDTH = 320;
 const CONTEXT_PANEL_DEFAULT_WIDTH = 600;
@@ -432,11 +432,7 @@ export const ContextPanel: React.FC<{ zone?: ContextZone }> = ({ zone = 'right' 
     if (!isOpen || isVertical || activeModeForWidth !== 'git' || !headerSlotEl) return;
     const measure = () => {
       const toolbar = headerSlotEl.querySelector<HTMLElement>('[data-context-panel-toolbar]');
-      const panel = headerSlotEl.closest('aside');
-      const chromeWidth = toolbar && panel
-        ? panel.getBoundingClientRect().width - toolbar.getBoundingClientRect().width
-        : 0;
-      const width = Math.max(CONTEXT_PANEL_MIN_WIDTH, Math.ceil(chromeWidth + (toolbar ? measureGitToolbarMinimumWidth(toolbar) : 0)));
+      const width = Math.max(CONTEXT_PANEL_MIN_WIDTH, toolbar ? measureGitPanelMinimumWidth(toolbar) : 0);
       setGitMinimumWidth(width);
       const savedWidth = useUIStore.getState().contextPanelByDirectory[directoryKey]?.widthByMode.git
         ?? getContextSurfaceDefaultWidth('git');
@@ -446,7 +442,12 @@ export const ContextPanel: React.FC<{ zone?: ContextZone }> = ({ zone = 'right' 
     measure();
     const observer = new MutationObserver(measure);
     observer.observe(headerSlotEl, { childList: true, characterData: true, subtree: true });
-    return () => observer.disconnect();
+    const resizeObserver = new ResizeObserver(measure);
+    resizeObserver.observe(headerSlotEl);
+    return () => {
+      observer.disconnect();
+      resizeObserver.disconnect();
+    };
   }, [activeModeForWidth, directoryKey, headerSlotEl, isOpen, isVertical, setContextPanelWidth]);
   // A side zone without an editor shrinks to the tree; the bottom zone keeps
   // its full width either way.

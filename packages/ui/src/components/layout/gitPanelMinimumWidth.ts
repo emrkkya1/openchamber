@@ -1,7 +1,13 @@
-/** Measures the Git toolbar with its picker labels fully collapsed. */
-export function measureGitToolbarMinimumWidth(toolbar: HTMLElement): number {
+/** Measures the Git panel with its picker labels fully collapsed. */
+export function measureGitPanelMinimumWidth(toolbar: HTMLElement): number {
   const parent = toolbar.parentElement?.parentElement;
-  if (!parent) return 0;
+  const card = toolbar.closest<HTMLElement>('[data-zone-card]');
+  if (!parent || !card) return 0;
+
+  const cardStyle = getComputedStyle(card);
+  // The aside and card animate separately; measure inside the same box.
+  const chromeWidth = card.getBoundingClientRect().width - toolbar.getBoundingClientRect().width
+    + Number.parseFloat(cardStyle.marginInlineStart) + Number.parseFloat(cardStyle.marginInlineEnd);
 
   const probe = toolbar.cloneNode(true);
   if (!(probe instanceof HTMLElement)) return 0;
@@ -22,7 +28,7 @@ export function measureGitToolbarMinimumWidth(toolbar: HTMLElement): number {
     const endPadding = row instanceof HTMLElement
       ? Number.parseFloat(getComputedStyle(row).paddingInlineEnd) || 0
       : 0;
-    return Math.ceil(probe.scrollWidth + endPadding);
+    return Math.ceil(chromeWidth + probe.scrollWidth + endPadding);
   } finally {
     probe.remove();
   }
