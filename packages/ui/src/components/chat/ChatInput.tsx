@@ -2035,6 +2035,8 @@ const ChatInputComponent: React.FC<ChatInputProps> = ({
                     await sessionActions.waitForConnectionOrThrow();
                     const visibleText = await renderMagicPrompt(command.visiblePrompt, variables.visible);
                     const instructionsText = await renderMagicPrompt(command.instructionsPrompt, variables.instructions);
+                    // Before the sent row commits, as for a plain send below.
+                    scrollToBottom?.();
                     await sendMessage(
                         visibleText,
                         providerIdToSend,
@@ -2047,7 +2049,6 @@ const ChatInputComponent: React.FC<ChatInputProps> = ({
                         inputMode,
                         sendMessageOptions,
                     );
-                    scrollToBottom?.();
                 } catch (error) {
                     restoreConsumedInput();
                     toast.error(getSubmitErrorMessage(error, t(command.errorToastKey)));
